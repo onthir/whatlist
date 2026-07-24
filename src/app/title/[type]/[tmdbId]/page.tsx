@@ -10,6 +10,7 @@ import { TitleActions } from "@/components/title/TitleActions";
 import { AddToListMenu } from "@/components/lists/AddToListMenu";
 import { ReviewItem, type ReviewItemData } from "@/components/ReviewItem";
 import { EmptyState } from "@/components/PosterGrid";
+import { Stars } from "@/components/ui/Stars";
 import type { ListStatus, MediaType } from "@/lib/types";
 import { toYear } from "@/lib/utils";
 
@@ -169,6 +170,17 @@ export default async function TitlePage({
   const year = toYear(detail.releaseDate);
   const runtime = runtimeLabel(detail.runtime);
 
+  // Community rating (average of WhatList members' ratings).
+  const rated = reviews.filter((r) => r.rating != null);
+  const communityRating = rated.length
+    ? rated.reduce((sum, r) => sum + (r.rating ?? 0), 0) / rated.length
+    : null;
+
+  // Logged-out visitors get a preview of reviews, not the whole list.
+  const PUBLIC_REVIEW_LIMIT = 3;
+  const visibleReviews = user ? reviews : reviews.slice(0, PUBLIC_REVIEW_LIMIT);
+  const hiddenCount = reviews.length - visibleReviews.length;
+
   return (
     <div className="-mt-8">
       {/* Hero */}
@@ -187,8 +199,8 @@ export default async function TitlePage({
 
       <div className="relative z-10 -mt-32 grid grid-cols-1 gap-8 md:-mt-40 md:grid-cols-[220px_1fr]">
         {/* Poster + actions */}
-        <div className="mx-auto w-40 md:mx-0 md:w-full">
-          <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-border bg-surface-2 shadow-2xl shadow-black/50">
+        <div>
+          <div className="relative mx-auto aspect-[2/3] w-40 overflow-hidden rounded-2xl border border-border bg-surface-2 shadow-2xl shadow-black/50 md:w-full">
             {poster ? (
               <Image src={poster} alt={detail.title} fill className="object-cover" sizes="220px" />
             ) : (
@@ -198,7 +210,7 @@ export default async function TitlePage({
             )}
           </div>
 
-          <div className="mt-4">
+          <div className="mx-auto mt-4 w-full max-w-sm md:max-w-none">
             {user ? (
               <div className="space-y-3">
                 <TitleActions
@@ -237,11 +249,25 @@ export default async function TitlePage({
             {year && <span>{year}</span>}
             {runtime && <span>{runtime}</span>}
             {detail.voteAverage ? (
-              <span className="inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-1" title="TMDB score">
                 <Star size={14} className="text-gold" fill="currentColor" />
                 {detail.voteAverage.toFixed(1)}
               </span>
             ) : null}
+            {communityRating != null && (
+              <span
+                className="inline-flex items-center gap-1.5"
+                title="WhatList community rating"
+              >
+                <Stars value={communityRating} size="sm" />
+                <span className="text-foreground">
+                  {(communityRating / 2).toFixed(1)}
+                </span>
+                <span className="text-muted">
+                  ({rated.length})
+                </span>
+              </span>
+            )}
           </div>
 
           {detail.tagline && (
@@ -310,11 +336,36 @@ export default async function TitlePage({
             subtitle={user ? "Be the first to rate and review this title." : "Log in to leave the first review."}
           />
         ) : (
-          <div className="card px-4">
-            {reviews.map((r, i) => (
-              <ReviewItem key={`${r.username}-${i}`} review={r} />
-            ))}
-          </div>
+          <>
+            <div className="card px-4">
+              {visibleReviews.map((r, i) => (
+                <ReviewItem key={`${r.username}-${i}`} review={r} />
+              ))}
+            </div>
+            {!user && (
+              <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-brand/30 bg-brand/5 px-6 py-6 text-center">
+                <p className="text-sm text-foreground/90">
+                  {hiddenCount > 0
+                    ? `Join WhatList to read all ${reviews.length} reviews and add your own.`
+                    : "Join WhatList to rate this, write a review, and follow other members."}
+                </p>
+                <div className="flex gap-2">
+                  <Link
+                    href="/signup"
+                    className="flex h-10 items-center rounded-xl gradient-brand px-5 text-sm font-medium text-white shadow-lg shadow-brand/25"
+                  >
+                    Sign up free
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="flex h-10 items-center rounded-xl border border-border bg-surface-2 px-5 text-sm font-medium"
+                  >
+                    Log in
+                  </Link>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

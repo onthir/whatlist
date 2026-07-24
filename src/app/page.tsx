@@ -25,6 +25,33 @@ export default async function HomePage() {
 
   // -------- Logged out: landing --------
   if (!user) {
+    // A public sample of recent written reviews (RLS allows anon read).
+    const { data: recentRows } = await supabase
+      .from("reviews")
+      .select(
+        "rating, body, created_at, profiles(username, display_name, avatar_url), media(*)",
+      )
+      .not("body", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    const recent: FeedItemData[] = (recentRows ?? []).map((r) => {
+      const p = r.profiles as unknown as {
+        username: string;
+        display_name: string | null;
+        avatar_url: string | null;
+      };
+      return {
+        username: p.username,
+        displayName: p.display_name ?? p.username,
+        avatarUrl: p.avatar_url,
+        media: r.media as unknown as MediaRow,
+        rating: r.rating,
+        body: r.body,
+        date: r.created_at,
+      };
+    });
+
     return (
       <div className="space-y-12">
         <section className="relative overflow-hidden rounded-3xl border border-border bg-surface/50 px-6 py-16 text-center sm:py-24">
@@ -49,6 +76,23 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        {recent.length > 0 && (
+          <section>
+            <SectionHeading icon={<Sparkles size={18} />} title="Recent reviews from the community" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {recent.map((item, i) => (
+                <FeedItem key={i} item={item} />
+              ))}
+            </div>
+            <p className="mt-4 text-center text-sm text-muted">
+              <Link href="/signup" className="font-medium text-brand hover:underline">
+                Sign up
+              </Link>{" "}
+              to rate, review, and follow other watchers.
+            </p>
+          </section>
+        )}
 
         {trending.length > 0 && (
           <section>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clapperboard, Bell } from "lucide-react";
+import { Clapperboard, Bell, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth";
 import { SearchBar } from "./SearchBar";
@@ -49,6 +49,14 @@ export async function Navbar() {
         <nav className="flex shrink-0 items-center gap-2">
           {profile ? (
             <>
+              <Link
+                href="/people"
+                aria-label="Find people"
+                title="Find people"
+                className="flex h-10 w-10 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+              >
+                <Users size={20} />
+              </Link>
               <Link
                 href="/notifications"
                 aria-label="Notifications"
