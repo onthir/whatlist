@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
+/* ===========================================================================
+   WhatList design system — dark-first, colorful, poster-forward.
+   =========================================================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0b0b12;
+  --surface: #14141f;
+  --surface-2: #1c1c2b;
+  --border: #2a2a3d;
+  --foreground: #ececf3;
+  --muted: #9a9ab5;
+
+  --brand: #a855f7; /* violet  */
+  --brand-2: #ec4899; /* pink    */
+  --brand-3: #6366f1; /* indigo  */
+  --accent: #22d3ee; /* cyan    */
+  --gold: #fbbf24; /* stars   */
+  --success: #34d399;
+  --danger: #f87171;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+
+  --color-brand: var(--brand);
+  --color-brand-2: var(--brand-2);
+  --color-brand-3: var(--brand-3);
+  --color-accent: var(--accent);
+  --color-gold: var(--gold);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --radius: 0.85rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  /* Ambient colorful glow behind the app. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 60rem at 15% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+      radial-gradient(50rem 50rem at 100% 0%, rgba(236, 72, 153, 0.14), transparent 55%),
+      radial-gradient(50rem 50rem at 50% 120%, rgba(34, 211, 238, 0.1), transparent 55%);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--brand) 40%, transparent);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .gradient-text {
+    background-image: linear-gradient(120deg, #818cf8, #c084fc, #f472b6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gradient-brand {
+    background-image: linear-gradient(120deg, var(--brand-3), var(--brand), var(--brand-2));
+  }
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+}
+
+/* Thin, themed scrollbars. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
 }

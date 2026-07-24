@@ -1,65 +1,183 @@
+import Link from "next/link";
 import Image from "next/image";
+import { Sparkles, Users, TrendingUp } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth";
+import { getTrending, posterUrl } from "@/lib/tmdb";
+import { PosterGrid, EmptyState } from "@/components/PosterGrid";
+import { FeedItem, type FeedItemData } from "@/components/FeedItem";
+import { Button } from "@/components/ui/Button";
+import type { MediaRow, NormalizedMedia } from "@/lib/types";
 
-export default function Home() {
+async function safeTrending(): Promise<NormalizedMedia[]> {
+  try {
+    return (await getTrending()).slice(0, 12);
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const supabase = await createClient();
+  const user = await getCurrentUser();
+
+  const trending = await safeTrending();
+
+  // -------- Logged out: landing --------
+  if (!user) {
+    return (
+      <div className="space-y-12">
+        <section className="relative overflow-hidden rounded-3xl border border-border bg-surface/50 px-6 py-16 text-center sm:py-24">
+          <div className="mx-auto max-w-2xl">
+            <h1 className="text-4xl font-extrabold tracking-tight sm:text-6xl">
+              Track everything you{" "}
+              <span className="gradient-text">watch</span>.
+            </h1>
+            <p className="mx-auto mt-5 max-w-xl text-lg text-muted">
+              Build your watchlist, log movies &amp; TV you&apos;ve seen, rate and
+              review them, and follow friends to see what they&apos;re into.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              <Link href="/signup">
+                <Button size="lg">Get started — it&apos;s free</Button>
+              </Link>
+              <Link href="/search">
+                <Button size="lg" variant="secondary">
+                  Browse titles
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {trending.length > 0 && (
+          <section>
+            <SectionHeading icon={<TrendingUp size={18} />} title="Trending this week" />
+            <PosterGrid items={trending} />
+          </section>
+        )}
+      </div>
+    );
+  }
+
+  // -------- Logged in: feed --------
+  const { data: follows } = await supabase
+    .from("follows")
+    .select("following_id")
+    .eq("follower_id", user.id);
+  const followingIds = follows?.map((f) => f.following_id) ?? [];
+
+  let feed: FeedItemData[] = [];
+  if (followingIds.length > 0) {
+    const { data: reviews } = await supabase
+      .from("reviews")
+      .select(
+        "rating, body, created_at, profiles(username, display_name, avatar_url), media(*)",
+      )
+      .in("user_id", followingIds)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    feed =
+      reviews?.map((r) => {
+        const p = r.profiles as unknown as {
+          username: string;
+          display_name: string | null;
+          avatar_url: string | null;
+        };
+        return {
+          username: p.username,
+          displayName: p.display_name ?? p.username,
+          avatarUrl: p.avatar_url,
+          media: r.media as unknown as MediaRow,
+          rating: r.rating,
+          body: r.body,
+          date: r.created_at,
+        };
+      }) ?? [];
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="grid gap-10 lg:grid-cols-[1fr_320px]">
+      <section>
+        <SectionHeading icon={<Sparkles size={18} />} title="From people you follow" />
+        {feed.length > 0 ? (
+          <div className="space-y-3">
+            {feed.map((item, i) => (
+              <FeedItem key={i} item={item} />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<Users size={36} />}
+            title="Your feed is quiet"
+            subtitle={
+              followingIds.length === 0
+                ? "Follow some people to see their reviews here."
+                : "The people you follow haven't reviewed anything yet."
+            }
+          />
+        )}
+        <div className="mt-4">
+          <Link href="/people">
+            <Button variant="outline" size="sm">
+              <Users size={15} /> Find people to follow
+            </Button>
+          </Link>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </section>
+
+      <aside>
+        <SectionHeading icon={<TrendingUp size={18} />} title="Trending" />
+        {trending.length > 0 ? (
+          <div className="grid grid-cols-3 gap-3 lg:grid-cols-2">
+            {trending.slice(0, 8).map((m) => (
+              <TrendingPoster key={`${m.mediaType}-${m.tmdbId}`} media={m} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted">Trending unavailable.</p>
+        )}
+      </aside>
     </div>
+  );
+}
+
+function SectionHeading({
+  icon,
+  title,
+}: {
+  icon: React.ReactNode;
+  title: string;
+}) {
+  return (
+    <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+      <span className="text-brand">{icon}</span>
+      {title}
+    </h2>
+  );
+}
+
+function TrendingPoster({ media }: { media: NormalizedMedia }) {
+  const poster = posterUrl(media.posterPath, "w342");
+  return (
+    <Link
+      href={`/title/${media.mediaType}/${media.tmdbId}`}
+      className="group relative block aspect-[2/3] overflow-hidden rounded-lg border border-border bg-surface-2"
+    >
+      {poster ? (
+        <Image
+          src={poster}
+          alt={media.title}
+          fill
+          sizes="120px"
+          className="object-cover transition-transform group-hover:scale-105"
+        />
+      ) : (
+        <span className="flex h-full items-center justify-center p-2 text-center text-xs text-muted">
+          {media.title}
+        </span>
+      )}
+    </Link>
   );
 }

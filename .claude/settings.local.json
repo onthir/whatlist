@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git --version)",
+      "Bash(rm -rf whatlist)",
+      "Bash(npx --yes create-next-app@latest whatlist --typescript --tailwind --app --eslint --src-dir --import-alias \"@/*\" --use-npm --no-turbopack --no-git)",
+      "Bash(npm run *)"
+    ]
+  }
+}
