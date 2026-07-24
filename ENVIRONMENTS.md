@@ -111,6 +111,39 @@ Always push to **dev** first and confirm before pushing to **prod**.
 
 ---
 
+## 📧 Email delivery (production)
+
+Supabase's **built-in email sender is for testing only** — it's throttled to a few auth
+emails per hour, so real signups / password resets will fail once you exceed it. Before
+launch, point the **prod** project at a free SMTP provider (no app code changes — only
+Supabase settings). This also removes the built-in cap.
+
+**Recommended free provider: [Brevo](https://www.brevo.com)** — 300 emails/day free, and
+you can verify a single sender address without owning a domain. (Alternatives: Mailjet
+200/day, Resend 100/day.)
+
+Setup:
+
+1. Sign up at brevo.com (no card). Under **Senders, Domains & Dedicated IPs → Senders**,
+   add and confirm your sender email. *(Authenticate a domain later for best
+   deliverability / to send "from WhatList".)*
+2. **SMTP & API → SMTP** → generate an SMTP key. Note the host, port, login, and key.
+3. In **Supabase (prod project) → Authentication → SMTP Settings**, enable custom SMTP:
+   ```
+   Host      = smtp-relay.brevo.com
+   Port      = 587
+   Username  = <your Brevo SMTP login>
+   Password  = <your Brevo SMTP key>
+   Sender    = <your verified sender>   Sender name = WhatList
+   ```
+4. In **Authentication → Rate Limits**, raise "emails per hour" now that you're off the
+   built-in sender.
+
+For the **dev** project you can keep the built-in sender (or disable "Confirm email" while
+testing). See the README's *"Branding the emails"* section for custom HTML templates.
+
+---
+
 ## How the app knows its environment
 
 `src/lib/env.ts` reads `NEXT_PUBLIC_APP_ENV` (falling back to `development` locally and
