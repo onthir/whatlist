@@ -7,7 +7,7 @@ import { mediaRowToNormalized } from "@/lib/media";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
-import { PosterGrid, EmptyState } from "@/components/PosterGrid";
+import { GroupedPosterGrid, EmptyState } from "@/components/PosterGrid";
 import { ProfileEditForm } from "@/components/ProfileEditForm";
 import type { MediaRow } from "@/lib/types";
 
@@ -71,7 +71,7 @@ export default async function MePage() {
               count: watchedMedia.length,
               content:
                 watchedMedia.length > 0 ? (
-                  <PosterGrid items={watchedMedia} />
+                  <GroupedPosterGrid items={watchedMedia} />
                 ) : (
                   <EmptyState
                     icon={<Eye size={36} />}
@@ -85,7 +85,7 @@ export default async function MePage() {
               count: watchlistMedia.length,
               content:
                 watchlistMedia.length > 0 ? (
-                  <PosterGrid items={watchlistMedia} />
+                  <GroupedPosterGrid items={watchlistMedia} />
                 ) : (
                   <EmptyState
                     icon={<Bookmark size={36} />}

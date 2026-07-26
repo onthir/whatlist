@@ -7,7 +7,7 @@ import { mediaRowToNormalized } from "@/lib/media";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Tabs } from "@/components/ui/Tabs";
-import { PosterGrid, EmptyState } from "@/components/PosterGrid";
+import { GroupedPosterGrid, EmptyState } from "@/components/PosterGrid";
 import { FollowButton } from "@/components/FollowButton";
 import { ReviewsFilterable, type ReviewEntry } from "@/components/ReviewsFilterable";
 import { ListsGrid } from "@/components/lists/ListsGrid";
@@ -173,7 +173,7 @@ export default async function ProfilePage({
             count: watchedMedia.length,
             content:
               watchedMedia.length > 0 ? (
-                <PosterGrid items={watchedMedia} />
+                <GroupedPosterGrid items={watchedMedia} />
               ) : (
                 <EmptyState icon={<Eye size={36} />} title="Nothing watched yet" />
               ),
@@ -183,7 +183,7 @@ export default async function ProfilePage({
             count: watchlistMedia.length,
             content:
               watchlistMedia.length > 0 ? (
-                <PosterGrid items={watchlistMedia} />
+                <GroupedPosterGrid items={watchlistMedia} />
               ) : (
                 <EmptyState icon={<Bookmark size={36} />} title="Watchlist is empty" />
               ),
